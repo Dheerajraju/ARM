@@ -1,0 +1,95 @@
+#include<LPC21XX.H>
+#define RS 1<<8 //setting RS pin in p0.8 pin
+#define E 1<<9 //setting E pin in p0.9 pin
+#define DATA 0xFF //setting p0.0 to p0.7 pins in lcd D0-D7
+#define SW1 1<<10 //setting switch-1 in p0.10 pin
+#define SW2 1<<11 //setting switch-2 in p[0/11 pin
+#define SW3 1<<12 //setting switch-3 in p0.12 pin
+//#define ALL_SWS SW1|SW2|SW3
+
+void delayms(unsigned int);
+void lcd_cmd(unsigned char);
+void lcd_data(unsigned char);
+void lcd_str(char*);
+void lcd_init(void);
+
+int main()
+{
+IODIR0 = DATA | RS | E;	//setting lcd as output
+IODIR0 =(SW1 | SW2 | SW3); //setting switches as input
+
+lcd_init();
+while(1) 
+{
+if((IOPIN0 & SW1)==0) 
+{
+lcd_cmd(0x01);
+lcd_str("SW1 is pressed");
+delayms(500);
+}
+else if
+((IOPIN0 &SW2)==0)
+{
+lcd_cmd(0x01);
+lcd_str("SW2 is pressed");
+delayms(500);
+}
+else if
+((IOPIN0 &SW3)==0)
+{
+lcd_cmd(0x01);
+lcd_str("SW3 is pressed");
+delayms(500);
+}
+}
+}
+
+void lcd_cmd(unsigned char cmd)
+{
+IOCLR0 = DATA;
+IOSET0 = cmd;
+IOSET0 = RS;
+IOSET0 = E;
+delayms(2);
+IOCLR0 = E;
+}
+
+void lcd_data(unsigned char data)
+{
+IOCLR0 = DATA;
+IOSET0 = data;
+IOSET0 = RS;
+IOSET0 = E;
+delayms(2);
+IOCLR0 = E;
+}
+
+void lcd_str(char *s)
+{
+while(*s) {
+lcd_data(*s++);
+}
+}
+
+
+void lcd_init(void)
+{
+delayms(20);
+lcd_cmd(0x38); //8-bit interface with both lines
+lcd_cmd(0x0C); //display ON cursor OFF
+lcd_cmd(0x01); //clear display
+lcd_cmd(0x06); //entry mode
+lcd_cmd(0x80); //cursor at line 1
+}
+
+void delayms(unsigned int ms)
+{
+unsigned int i,j;
+for(i=0;i<ms;i++) {
+for(j=0;j<12000;j++);
+}
+}
+
+
+
+
