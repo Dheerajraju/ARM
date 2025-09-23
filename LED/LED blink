@@ -1,1 +1,22 @@
+#include<LPC21XX.H>
+#define LED1 1<<17 // Assigning the LED1 TO P0.17 pin
+#define LED2 1<<16 // Assigning the LED2 TO P0.16 pin
+//input delayms
+void delayms(int ms)
+{
+unsigned int i;
+for(;ms>0;ms--)
+for(i=12000;i>0;i--);
+}
+int main()
+{
+IODIR0 = LED1 | LED2;  //setting input direction for LED1 and LED2
+while(1) //making the led to blink in infinite loop
+{
+IOSET0 = LED1| LED2; //making the LED1 and LED2 high
+delayms(500); //500 millisecond delay
+IOCLR0 = LED1 | LED2; //making the LED1 and LED2 low
+delayms(500);// 500 millisecond delay
+}
+}
 
