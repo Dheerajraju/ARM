@@ -1,0 +1,76 @@
+#include <LPC21XX.H>
+#define RS 1<<8
+#define E 1<<9
+#define LED 0xFF
+
+void init(void);
+void LCD_COMMAND(unsigned char);
+void LCD_STR(unsigned char*);
+void LCD_DATA(unsigned char);
+void LCD_BINARY(unsigned char);
+void delayms(int);
+
+void delayms(int ms)
+{
+T0PR = 15000-1;
+T0TCR = 0x01;
+while(T0TC <ms);
+T0TCR = 0x03;
+T0TCR = 0x00;
+}
+
+int main()
+{
+init();
+LCD_COMMAND(0x80);
+LCD_BINARY(3);
+while(1);
+}
+
+
+void init(void)
+{
+IODIR0 = LED |RS |E;
+LCD_COMMAND(0x01);
+LCD_COMMAND(0x02);
+LCD_COMMAND(0x38);
+LCD_COMMAND(0x0C);
+}
+
+void LCD_COMMAND(unsigned char cmd)
+{
+IOCLR0 = LED | RS |E;
+IOSET0 = cmd;
+IOCLR0 = RS;
+IOSET0 = E;
+delayms(2);
+IOCLR0 = E;
+}
+
+
+void LCD_DATA(unsigned char data)
+{
+IOCLR0 = LED | RS |E;
+IOSET0 = data;
+IOSET0 = RS;
+IOSET0 = E;
+delayms(2);
+IOCLR0 = E;
+}
+
+void LCD_STR(unsigned char*s)
+{
+while(*s)
+{
+LCD_DATA(*s++);
+}
+}
+
+void LCD_BINARY(unsigned char num)
+{
+int i;
+for(i=7;i>=0;i--)
+{
+LCD_DATA(((num>>i)&1)+'0');
+}
+}
