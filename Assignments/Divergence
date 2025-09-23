@@ -1,0 +1,43 @@
+#include<LPC21XX.H>
+#define LED0 1<<0
+#define LED1 1<<1
+#define LED2 1<<2
+#define LED3 1<<3
+#define LED4 1<<4
+#define LED5 1<<5
+#define LED6 1<<6
+#define LED7 1<<7
+
+#define ALL_LEDS LED0 |LED1 |LED2 | LED3 |LED4 | LED5 |LED6 | LED7
+void delayms(int ms)
+{
+unsigned int i;
+for( ;ms>0;ms--)
+for(i=12000;i>0;i--);
+}
+int main()
+{
+IODIR0 |= ALL_LEDS;
+while(1)
+{
+IOSET0 = ALL_LEDS;
+IOCLR0 = LED3 | LED4;
+delayms(500);
+
+IOSET0 = LED3 |LED4;
+IOCLR0 = LED2 | LED5;
+delayms(500);
+
+IOSET0 = LED2 | LED5;
+IOCLR0 = LED1 | LED6;
+delayms(500);
+
+IOSET0 = LED1 | LED6;
+IOCLR0 = LED0 | LED7;
+delayms(500);
+
+IOSET0 = ALL_LEDS;
+delayms(500);
+}
+
+}  
