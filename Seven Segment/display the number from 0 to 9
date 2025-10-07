@@ -1,0 +1,24 @@
+#include <LPC21xx.h>       
+#include "delay.h"          
+
+#define seg_d 0xff           // Define all 8 bits (P0.0 to P0.7) as data lines for 7-segment
+
+typedef unsigned char u8;    // Define u8 as an alias for unsigned char
+
+// Lookup table for displaying digits 0–9 on a common cathode 7-segment display
+u8 seg_lut[10] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+
+int main()
+{
+    u8 digit = 0;            // Variable to hold the current digit to display
+    PINSEL0 = 0x00000000;    // Configure P0.0–P0.7 pins as GPIO
+    IODIR0 = seg_d;          // Set P0.0–P0.7 as output pins
+    IOSET0 = seg_d;          // Initially turn OFF all segments (for common cathode)
+
+    while (digit < 10)       // Loop to display digits from 0 to 9
+    {
+        IOCLR0 = seg_d;          // Clear all previous segment outputs
+        IOSET0 = seg_lut[digit++]; // Output the pattern for the current digit, then increment
+        delayms(500);             // Delay for 500 milliseconds between each digit
+    }
+}
