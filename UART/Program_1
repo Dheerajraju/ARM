@@ -1,8 +1,8 @@
-/* Write an ECP to transmit 'A' serially through UART0 of LPC2129 Note:Pclk=15MHZ ,Baud rate=9600 */
+Write an ECP to transmit 'A' serially through UART0 of LPC2129 Note:Pclk=15MHZ ,Baud rate=9600 
 
 #include<LPC21XX.H>
-void U0RT0_CONFIG(void);
-void U0RT0_TX(unsigned char);
+void URT0_CONFIG(void);
+void URT0_TX(unsigned char);
 
 int main()
 {
