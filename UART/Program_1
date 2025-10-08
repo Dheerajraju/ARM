@@ -1,26 +1,26 @@
 Write an ECP to transmit 'A' serially through UART0 of LPC2129 Note:Pclk=15MHZ ,Baud rate=9600 
 
 #include<LPC21XX.H>
-void URT0_CONFIG(void);
-void URT0_TX(unsigned char);
+void UART0_CONFIG(void);
+void UART0_TX(unsigned char);
 
 int main()
 {
 PINSEL0 = 0x00000005; //p0.0 as TXDO and p0.1 as RXDO
-U0RT_CONFIG(); //call function to configuration U0ART0
-U0ART_TX('A'); //Transmit character 'A' through U0ART
+UART0_CONFIG(); //call function to configuration U0ART0
+UART0_TX('A'); //Transmit character 'A' through U0ART
 }
 
 void UART0_CONFIG(void)
 {
     U0LCR = 0x83;   // 8-bit data, 1 stop bit, no parity (0x03)
-                    // Bit7 (DLAB=1) → Allows access to baud rate registers (DLL, DLM)
+                    // Bit7 (DLAB=1) ? Allows access to baud rate registers (DLL, DLM)
 
     U0DLL = 97;     // Set Baud Rate (Low divisor byte)
     U0DLM = 0;      // Set Baud Rate (High divisor byte)
                     // Baud rate = PCLK / (16 × (256*DLM + DLL))
                     // = 15,000,000 / (16 × 97)
-                    // ≈ 9677 bps ≈ 9600 bps (acceptable tolerance)
+                    // ˜ 9677 bps ˜ 9600 bps (acceptable tolerance)
 
     U0LCR = 0x03;   // Clear DLAB bit (Bit7=0)
                     // Final setting: 8-bit word length, 1 stop bit, no parity
@@ -30,7 +30,7 @@ void UART0_CONFIG(void)
 void UART0_TX(unsigned char dat)
 {
     while(((U0LSR >> 5) & 1) == 0);  // Wait until Transmit Holding Register is empty
-                                     // Bit5 (THRE) = 1 → Ready to transmit
+                                     // Bit5 (THRE) = 1 ? Ready to transmit
 
     U0THR = dat;                     // Load data into Transmit Holding Register
                                      // Data will be sent serially via TXD0 pin
