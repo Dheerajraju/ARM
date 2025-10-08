@@ -1,0 +1,52 @@
+//Write an ECP to transmit 'A' serially through UART0 of LPC2129 using interrupt method 
+	//Note:Pclk=15MHZ ,Baud rate=9600
+
+#include<LPC21XX.H>
+#define LED 1<<17 //p0.17 -> LED
+#define SW 14 //p0.14 -> SW
+void UART0_CONFIG(void);
+void UART0_Interrupt_config(void);
+
+unsigned char i=1;
+void UART0_ISR(void) __irq
+{
+if(i<26)
+U0THR = 'A' + i++;  //Transmitts next character
+VICVectAddr = 0; //signal end of intrrupt
+}
+
+int main()
+{
+	IODIR0 = LED; // P0.17 as OUTPUT
+	UART0_CONFIG();
+	UART0_Interrupt_config();
+	VICIntEnable = 1<<6; // Enable UART0 interrupt in VIC
+
+	U0THR = 'A'; // Transmit first character manually
+
+	while(1)
+	{
+		if(((IOPIN0>>SW)&1)==0)
+			IOCLR0 = LED;   // LED OFF when switch pressed
+		else
+			IOSET0 = LED;   // LED ON otherwise
+	}
+}
+
+void UART0_Interrupt_config(void)
+{
+	VICIntSelect = 0;            // All interrupts are IRQ (not FIQ)
+	VICVectCntl0 = (0x20)|6;     // Enable slot 0 for UART0 (interrupt number 6)
+	VICVectAddr0 = (int)UART0_ISR; // Assign ISR address
+	U0IER = 1<<1;                // Enable THRE interrupt
+}
+
+
+void UART0_CONFIG(void)
+{
+	PINSEL0 = 0X5;   // Select TXD0 (P0.0) and RXD0 (P0.1)
+	U0LCR = 0X83;    // 8-bit word length, 1 stop bit, enable DLAB
+	U0DLL = 97;      // Baud rate = 9600 @ 15MHz PCLK
+	U0DLM = 0;
+	U0LCR = 0X03;    // Disable DLAB
+}
