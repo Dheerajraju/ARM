@@ -1,0 +1,40 @@
+Write an ECP to transmit 'A' to 'Z' serially through UART0 of LPC2129 Note:Pclk=15MHZ ,Baud rate=9600
+
+#include<LPC21XX.H>
+void UART0_CONFIG(void);
+void UART0_TX(unsigned char);
+
+int main()
+{
+    unsigned char ch = 'A';      // Start with the first character 'A'
+    PINSEL0 = 0x05;              // Configure P0.0 as TXD0 and P0.1 as RXD0
+                                 // Bit0 = 1 → TXD0; Bit2 = 1 → RXD0
+
+    UART0_CONFIG();              // Initialize UART0 settings (baud rate, frame format)
+    while (ch <= 'Z')            // Loop until 'Z'
+        UART0_TX(ch++);          // Send current character and then increment it
+}
+
+
+void UART0_CONFIG(void)
+{
+    U0LCR = 0x83;     // 0x80 → DLAB=1 (allow access to divisor latches)
+                      // 0x03 → 8-bit data, 1 stop bit, no parity
+                      // Combined = 0x83
+
+    U0DLL = 97;       // Set baud-rate divisor for 9600 bps @ PCLK = 15 MHz
+    U0DLM = 0;        // High-byte = 0
+
+    // Baud Rate = 15,000,000 / (16 × (256×DLM + DLL))
+    //            = 15,000,000 / (16 × 97) ≈ 9677 ≈ 9600 bps
+
+    U0LCR = 0x03;     // Clear DLAB bit (Bit 7 = 0)
+                      // Keep frame format: 8 data bits, 1 stop, no parity
+}
+
+
+void UART0_TX(unsigned char dat)
+{
+    while (((U0LSR >> 5) & 1) == 0);  // Wait until THR empty (bit 5 = 1)
+    U0THR = dat;                       // Load data into Transmit Holding Register
+}
