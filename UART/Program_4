@@ -7,28 +7,40 @@ void UART0_STR(unsigned char *);
 
 int main()
 {
-UART0_CONFIG();
-UART0_STR("vector");
+    UART0_CONFIG();                  // Initialize UART0 configuration
+    UART0_STR("Vector");             // Transmit the string "Vector"
 }
+
 
 void UART0_CONFIG(void)
 {
-PINSEL0 = 0x00000005;
-U0LCR = 0x83;
-U0DLL = 97;
-U0DLM = 0;
-U0LCR = 0x03;
+    PINSEL0 = 0x00000005;   // Select UART0 pins:
+                            // Bit0=1 → P0.0 as TXD0
+                            // Bit2=1 → P0.1 as RXD0
+
+    U0LCR = 0x83;           // 0x80 → DLAB=1 (access baud rate registers)
+                            // 0x03 → 8-bit, 1 stop bit, no parity
+
+    U0DLL = 97;             // Set baud rate divisor (low byte)
+    U0DLM = 0;              // Set baud rate divisor (high byte)
+                            // Baud = PCLK / (16 × (256×DLM + DLL))
+                            // = 15,000,000 / (16×97) ≈ 9677 bps ≈ 9600 bps
+
+    U0LCR = 0x03;           // Clear DLAB, keep 8-bit, 1 stop, no parity
 }
+
 
 void UART0_TX(unsigned char dat)
 {
-while(((U0LSR >> 5)&1)==0);
-U0THR = dat;
+    while (((U0LSR >> 5) & 1) == 0);   // Wait until THR empty (bit 5 = 1)
+    U0THR = dat;                        // Load character into Transmit Holding Register
 }
+
 
 void UART0_STR(unsigned char *s)
 {
-while(*s)
-UART0_TX(*s++);
+    while (*s)               // Loop until null terminator ('\0') is reached
+        UART0_TX(*s++);      // Send each character and move to next
 }
+
 
