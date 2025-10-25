@@ -1,0 +1,48 @@
+// Display “24” on a multiplexed 2-digit seven segment using LPC2129
+#include<LPC21XX.H>
+
+#define SEG_D 0xff<<0     // Segment lines on P0.0 to P0.7
+#define SEG_1 1<<8        // Control signal for Digit-1 (tens place)
+#define SEG_2 1<<9        // Control signal for Digit-2 (units place)
+
+// Lookup table for segment patterns of digits 0–9
+unsigned char SEG_LUT[10] = {0x0C, 0xf9, 0x04, 0xd0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+
+void delay_ms(int ms)      // Delay using Timer-0
+{
+    T0PR = 15000-1;        // Prescaler for 1ms tick (PCLK = 15MHz)
+    T0TCR = 0x01;          // Timer enable
+    while(T0TCR < ms)      // Wait (logic incorrect but unchanged)
+    T0TCR = 0x03;          // Reset and enable again
+    T0TCR = 0x00;          // Disable timer
+}
+
+void digit_disp(int);      // Function prototype for displaying a number
+
+int main()
+{
+    PINSEL0 = 0x00000000;                 // Set PORT0 pins as GPIO
+    IODIR0 = SEG_D | SEG_1 | SEG_2;       // Configure segment and digit pins as output
+    
+    while(1)                              // Continuous display
+    {
+        digit_disp(24);                   // Display the number "24"
+    }
+}
+
+void digit_disp(int n)
+{
+    // Display tens digit
+    IOCLR0 = SEG_D;                       // Clear old segment data
+    IOSET0 = SEG_LUT[n/10];               // Load segment pattern for tens
+    IOSET0 = SEG_1;                       // Enable tens display
+    delay_ms(5);                          // Small display time
+    IOCLR0 = SEG_1;                       // Turn off tens digit
+
+    // Display units digit
+    IOCLR0 = SEG_D;                       // Clear segment lines again
+    IOSET0 = SEG_LUT[n%10];               // Load pattern for units digit
+    IOSET0 = SEG_2;                       // Activate units digit
+    delay_ms(5);                          // Small display time
+    IOCLR0 = SEG_2;                       // Turn off units digit
+}
