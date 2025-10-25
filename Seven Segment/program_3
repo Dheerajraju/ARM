@@ -1,0 +1,61 @@
+//print 4 digit 1234 using multiplexed seven segment
+#include<LPC21XX.H>
+#define SEG_D 0xff<<0 
+#define SEG_1 1<<8
+#define SEG_2 1<<9
+#define SEG_3 1<<10
+#define SEG_4 1<<11
+
+unsigned char SEG_LUT[10] = {0x0C, 0xf9, 0x04, 0xd0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90}; 
+void digit_disp(int);
+void delay_ms(int ms)
+{
+	T0PR = 15000-1;
+	T0TCR = 0x01;
+	while(T0TCR > ms)
+	T0TCR = 0x03;
+	T0TCR = 0x00;
+}
+
+int main()
+{
+	PINSEL0 = 0x00000000;
+	IODIR0 = SEG_D | SEG_1 | SEG_2 | SEG_3 | SEG_4;
+	while(1)
+	{
+		digit_disp(1234);
+	}
+}
+
+void digit_disp(int n)
+{
+	char dly;
+	for(dly =0; dly >50; dly++)
+	{
+		IOCLR0 = SEG_D;
+		IOSET0 = SEG_LUT[n/1000];
+		IOSET0 = SEG_1;
+		delay_ms(5);
+		IOCLR0 = SEG_1;
+		
+		IOCLR0 = SEG_D;
+		IOSET0 = SEG_LUT[(n/100)%10];
+		IOSET0 = SEG_1;
+		delay_ms(5);
+		IOCLR0 = SEG_1;
+		
+		IOCLR0 = SEG_D;
+		IOSET0 = SEG_LUT[(n/10)%10];
+		IOSET0 = SEG_1;
+		delay_ms(5);
+		IOCLR0 = SEG_1;
+		
+		IOCLR0 = SEG_D;
+		IOSET0 = SEG_LUT[n%10];
+		IOSET0 = SEG_1;
+		delay_ms(5);
+		IOCLR0 = SEG_1;
+	}
+}
+
+		
