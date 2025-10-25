@@ -1,24 +1,32 @@
-#include <LPC21xx.h>       
-#include "delay.h"          
+// Print 0 to 9 on seven segment display using LPC2129
+#include<LPC21XX.H>
 
-#define seg_d 0xff           // Define all 8 bits (P0.0 to P0.7) as data lines for 7-segment
+#define SEG_D 0xff<<0   // Segment pins connected to lower 8 bits of PORT0
+#define SEG_1 1<<8      // Control pin for enabling the seven-segment display
 
-typedef unsigned char u8;    // Define u8 as an alias for unsigned char
+// Lookup table for numbers 0 to 9 (segment codes)
+unsigned char SEG_LUT[10] = {0x0C, 0xf9, 0x04, 0xd0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
 
-// Lookup table for displaying digits 0–9 on a common cathode 7-segment display
-u8 seg_lut[10] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+void delay_ms(int ms) // Timer delay function
+{
+	T0PR = 15000-1;   // Set prescaler for 1ms delay (assuming PCLK 15 MHz)
+	T0TCR = 0x01;     // Timer enable and reset counter
+	while(T0TCR < ms) // Wait loop (incorrect logic but keeping original as requested)
+	T0TCR = 0x03;     // Reset and enable timer again
+	T0TCR = 0x01;     // Enable timer
+}
 
 int main()
 {
-    u8 digit = 0;            // Variable to hold the current digit to display
-    PINSEL0 = 0x00000000;    // Configure P0.0–P0.7 pins as GPIO
-    IODIR0 = seg_d;          // Set P0.0–P0.7 as output pins
-    IOSET0 = seg_d;          // Initially turn OFF all segments (for common cathode)
+	char digit = 0;              // Starting number from 0
+	IODIR0 = SEG_D | SEG_1;      // Configure segment and control pin as output
 
-    while (digit < 10)       // Loop to display digits from 0 to 9
-    {
-        IOCLR0 = seg_d;          // Clear all previous segment outputs
-        IOSET0 = seg_lut[digit++]; // Output the pattern for the current digit, then increment
-        delayms(500);             // Delay for 500 milliseconds between each digit
-    }
+	while(digit < 10)            // Loop to display digits 0 to 9
+	{
+		IOCLR0 = SEG_D;         // Clear previous segment data
+		IOSET0 = SEG_LUT[digit++]; // Output segment code for current digit
+		IOCLR0 = SEG_1;         // Activate display (assuming active LOW enable)
+		delay_ms(500);          // 500ms delay so digit is visible
+		IOSET0 = SEG_1;         // Turn off the display
+	}
 }
