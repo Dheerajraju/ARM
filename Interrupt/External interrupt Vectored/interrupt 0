@@ -1,0 +1,41 @@
+//External interrupt 0 vectored irq
+//selecting low-level sensivity and slot 0 
+#inlcude<LPC21XX.H>
+#define LED0 1<<0
+
+/* External interrupt0 ISR */
+void ext_int0_isr(void) __irq
+{
+EXTINT = OxO1; //TO clear the EINT0 flag
+IOSET0 = LED0;
+IOCLR0 = LED0;
+VICVectAddr0 = 0x01; //to indicate the end of ISR
+}
+
+int main()
+{
+int cnt = 0;
+PINSEL1 = 0x01; //p0.16 is selected as EINTO pin
+IODIRO = LED0; //p0/0 as output pin
+
+/*select the category of interrupt */
+VICIntTSelect0 = 0; //all interrupt sources as IRQ's
+
+/*allocate to slot-0 to external interrupt0 */
+VICVectcntl0 = (0x20) | 14;
+VICVectAddr0 = (int) ext_int0_isr;
+
+/*Selecting the triggering mode for external interrupt */
+/* low-level sensitivity */
+EXTMODE = 0x00;
+EXTPOLAR = 0x00;
+
+VICIntEnable = 1<<14; //to enable eternal interrupt0
+
+/*main code */
+while(1)
+{
+cnt++;
+}
+}
+}
