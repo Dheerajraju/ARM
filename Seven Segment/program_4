@@ -1,0 +1,70 @@
+// Display floating number "2.4" using multiplexed 2-digit seven segment display (LPC2129)
+#include<LPC21XX.H>
+
+#define SEG_D 0xff               // Segment lines connected to P0.0-P0.7
+#define SEG_1 1<<8               // Enable pin for digit-1 (before decimal point)
+#define SEG_2 1<<9               // Enable pin for digit-2 (after decimal point)
+
+typedef unsigned char u8;        // Alias for unsigned char
+
+unsigned char dp1 = 0xff, dp2 = 0xff; // Flags for decimal point (not used in this logic)
+
+// Lookup table for displaying digits 0 to 9 on seven-segment
+u8 SEG_LUT[10] = {0x0C, 0xf9, 0x04, 0xd0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+
+void delay_ms(int);              // Delay function prototype
+void disp_digit1(int);           // Function to display 2 digits (integer display)
+void disp_digit(float);          // Function to display floating number
+
+int main()
+{
+    PINSEL0 = 0x00000000;        // Use PORT0 as GPIO
+    IODIR0 = SEG_D | SEG_1 | SEG_2; // Set segment and digit enable pins as output
+    
+    while(1)
+    {
+        disp_digit(2.4);         // Display the value 2.4 continuously
+    }
+}
+
+void disp_digit1(int n)          // Display 2-digit integer using multiplexing
+{
+    // Display 1st digit: tens or integer part
+    IOCLR0 = SEG_D;              // Clear previous data
+    IOSET0 = SEG_LUT[n/10];      // Display first digit
+    IOSET0 = SEG_1;              // Enable first display
+    delay_ms(5);                 // Visible persistence time
+    IOCLR0 = SEG_1;              // Disable first digit
+    
+    // Display 2nd digit: units (fractional part)
+    IOCLR0 = SEG_D;
+    IOCLR0 = SEG_LUT[n%10];      // Load second digit pattern
+    IOSET0 = SEG_2;              // Enable second display
+    delay_ms(5);
+    IOCLR0 = SEG_2;
+}
+
+void disp_digit(float f)         // Display a floating number
+{
+    int temp = 0;
+
+    // Check range for float handling (0.0 to 9.9)
+    if((f > 0.0) && (f < 10.0))
+    {
+        dp1 = 0xff;              // Decimal point flag update (not used in display)
+        temp = f * 10;           // Convert float: 2.4 * 10 = 24
+    }
+
+    disp_digit(temp);            // Display converted value through integer display
+}
+
+void delay_ms(int ms)            // Delay function using Timer0
+{
+    T0PR = 15000 - 1;            // Prescaler for 1ms delay
+    T0TCR = 0x03;                // Enable and reset timer
+    
+    while(T0TCR > ms)            // Wait loop (incorrect but unchanged)
+        T0TCR = 0x00;            // Stop timer
+    
+    T0TCR = 0x01;                // Restart timer
+}
