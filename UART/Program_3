@@ -1,39 +1,48 @@
 Write an ECP to receive and convert to opposite case and re-transmit serially through UART0 of LPC2129 Note:Pclk=15MHZ ,Baud rate=9600
 
 #include<LPC21XX.H>
+// Function prototypes
 void UART0_CONFIG(void);
 void UART0_TX(unsigned char);
 unsigned char UART0_RX(void);
 
 int main()
 {
-unsigned char rxByte;
-UART0_CONFIG();
-while(1)
-{
-rxByte = UART0_RX();
-rxByte = rxByte ^ 32;
-UART0_TX(rxByte);
-}
+    unsigned char rxByte;
+    UART0_CONFIG();  // Configure UART0
+
+    while(1)
+    {
+        rxByte = UART0_RX();   // Receive a character
+        rxByte = rxByte ^ 32;  // Flip case using XOR (ASCII trick)
+        UART0_TX(rxByte);      // Transmit modified character
+    }
 }
 
+// UART0 initialization (9600 baud, 8-bit data, no parity, 1 stop)
 void UART0_CONFIG(void)
 {
-PINSEL0 = 0x00000005;
-U0LCR = 0x83;
-U0DLL = 97;
-U0DLM = 0;
-U0LCR = 0x03;
+    PINSEL0 = 0x00000005; // Enable UART0 TXD0(P0.0) & RXD0(P0.1) functions
+
+    U0LCR = 0x83; // Enable DLAB=1, set 8-bit data format
+    U0DLL = 97;   // 9600 Baud rate for PCLK = 15MHz
+    U0DLM = 0;    // High divisor value not needed, so 0
+    U0LCR = 0x03; // DLAB=0, Continue 8-bit data format
 }
 
+// UART0 transmit function
 void UART0_TX(unsigned char dat)
 {
-while(((U0LSR >> 5)&1)==0);
-U0THR = dat;
+    // Wait until THR (Transmit Holding Register) is empty
+    while(((U0LSR >> 5) & 1) == 0);
+    U0THR = dat;  // Send character
 }
 
+// UART0 receive function
 unsigned char UART0_RX(void)
 {
-while((U0LSR&1)==0);
-return U0RBR;
+    // Wait until data exists in RBR (Receiver Buffer Register)
+    while((U0LSR & 1) == 0);
+    return U0RBR; // Return received byte
 }
+
