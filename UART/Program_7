@@ -1,0 +1,76 @@
+/* Write an ECP to receive your name from terminal and display the received name on the alphanumeric LCD
+Note: Receive the string and display the string on LCD only when the enter is pressed*/
+
+#include <LPC21XX.H>
+#include "lcd.h"
+
+void UART0_CONFIG(void);            // UART0 initialization
+void UART0_TX(unsigned char );      // Transmit one character
+unsigned char UART0_RX(void);       // Receive one character
+void UART0_STR(unsigned char *);    // Transmit full string
+
+int main()
+{
+	unsigned char name[20];   // Buffer to store received name
+	unsigned char rxByte;     // For receiving one character at a time
+	int i=0;                  // Index counter for array
+
+	LCD_INIT();               // Initialize LCD
+	UART0_CONFIG();           // Configure UART0
+	LCD_COMMAND(0x80);        // Move cursor to first line of LCD
+	UART0_STR("Enter your name: ");  // Ask user through terminal
+
+	while(1)
+	{
+		rxByte = UART0_RX();  // Receive one character
+		UART0_TX(rxByte);     // Echo back to terminal (for user feedback)
+		
+		// Check if user pressed ENTER
+		if((rxByte == '\r')||(rxByte == '\n'))
+		{
+			name[i] = '\0';                 // End the string
+			UART0_STR("\nYou entered: ");   // Print response
+			UART0_STR(name);                // Print name on terminal
+			
+			LCD_COMMAND(0x01);              // Clear LCD screen
+			LCD_STR(name);                  // Display name on LCD
+			UART0_STR("\r\nEnter your name: "); // Prompt again
+
+			i=0;                            // Reset index for next input
+		}
+		else
+		{
+			name[i++] = rxByte;             // Store character in buffer
+			if(i >= sizeof(name) - 1)       // Prevent overflow
+				i = 0;                      // Reset safely
+		}
+	}
+}
+
+void UART0_CONFIG()
+{
+    PINSEL0 = 0x00000005;  // Select UART0 TXD0 (P0.0) & RXD0 (P0.1)
+    U0LCR = 0x83;          // 8-bit data, DLAB=1 (to access divisor registers)
+    U0DLL = 78;            // Baud rate 9600 (for 12 MHz PCLK)
+ // U0DLL = 97;            // Use this line instead if PCLK = 15 MHz
+    U0DLM = 0;
+    U0LCR = 0x03;          // DLAB=0, lock divisor, keep 8-bit mode
+}
+
+void UART0_TX(unsigned char dat)
+{
+	while(((U0LSR>>5)&1)==0); // Wait until THR (Transmit Holding Register) empty
+	U0THR = dat;              // Send the byte
+}
+
+unsigned char UART0_RX()
+{
+	while((U0LSR&1)==0); // Wait until data received (RDR = 1)
+	return U0RBR;        // Return received byte
+}
+
+void UART0_STR(unsigned char *s)
+{
+	while(*s)
+		UART0_TX(*s++); // Send characters until null terminator
+}
